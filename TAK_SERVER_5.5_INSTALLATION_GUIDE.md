@@ -2,6 +2,31 @@
 
 **Complete guide for installing an official TAK Server 5.5 from tak.gov**
 
+---
+
+## CRITICAL GOTCHAS - READ BEFORE STARTING!
+
+### PostgreSQL Version: MUST Use Version 15 (NOT 16!)
+
+**Ubuntu 24.04 will install PostgreSQL 16 by default, which BREAKS TAK Server!**
+
+- TAK Server 5.5 **only works with PostgreSQL 15**
+- Running `apt install postgresql` on Ubuntu 24.04 installs version 16
+- PostgreSQL 16 causes database connection failures and server crashes
+- **You MUST explicitly install PostgreSQL 15 from the PostgreSQL APT repository**
+- See [System Prerequisites](#system-prerequisites) section for correct installation
+
+### Java: OpenJDK 17 is REQUIRED (Don't Remove It!)
+
+**The guide mentions removing OpenJDK, but you actually need to keep OpenJDK 17!**
+
+- TAK Server .deb package requires OpenJDK 17 packages as dependencies
+- You need BOTH Temurin JDK 17 (runtime) AND OpenJDK 17 (dependencies)
+- Do not completely remove OpenJDK 17 after installing Temurin
+- The installation will fail without OpenJDK 17 packages
+
+---
+
 This comprehensive guide will walk you through setting up a production-ready TAK Server with:
 - Temurin Java 17 (Eclipse Adoptium)
 - PostgreSQL database
@@ -18,8 +43,9 @@ This comprehensive guide will walk you through setting up a production-ready TAK
 1. [Prerequisites](#prerequisites)
 2. [Java Environment Setup](#java-environment-setup)
 3. [System Prerequisites](#system-prerequisites)
-4. [TAK Server Installation](#tak-server-installation)
-5. [Database Configuration](#database-configuration)
+4. [PostgreSQL 15 Installation](#postgresql-15-installation)
+5. [TAK Server Installation](#tak-server-installation)
+6. [Database Configuration](#database-configuration)
 6. [Certificate Authority Setup](#certificate-authority-setup)
 7. [Server Configuration](#server-configuration)
 8. [Starting the Server](#starting-the-server)
@@ -62,9 +88,13 @@ hostname -I
 
 ## Java Environment Setup
 
-TAK Server 5.5 requires Java 17. We'll use Eclipse Temurin (previously AdoptOpenJDK) instead of OpenJDK for better production support.
+TAK Server 5.5 requires Java 17. We'll use Eclipse Temurin as the primary runtime, but we also need OpenJDK 17 packages for dependencies.
 
-### Step 1: Remove Existing OpenJDK
+**IMPORTANT**: You need BOTH Temurin JDK 17 AND OpenJDK 17 installed!
+- Temurin 17: Better for production runtime
+- OpenJDK 17: Required by TAK Server .deb package dependencies
+
+### Step 1: Remove Existing Java 21 (Keep Java 17!)
 
 First, check what Java versions are installed:
 ```bash
@@ -72,14 +102,14 @@ java -version
 dpkg -l | grep -i openjdk
 ```
 
-Remove all OpenJDK packages:
+Remove only Java 21 and other non-17 versions:
 ```bash
-sudo apt-get remove -y openjdk-17-jdk openjdk-17-jre openjdk-17-jdk-headless openjdk-17-jre-headless
+# Remove Java 21 (if present)
 sudo apt-get remove -y openjdk-21-jdk openjdk-21-jre openjdk-21-jdk-headless openjdk-21-jre-headless
 sudo apt-get autoremove -y
 ```
 
-**Why remove OpenJDK?** Temurin provides better long-term support and more predictable updates for production environments.
+**Note**: We do NOT remove OpenJDK 17 here - if it's installed, leave it. We'll install it in Step 4 if not present.
 
 ### Step 2: Install Temurin Java 17
 
@@ -139,6 +169,30 @@ java -version
 
 **Important:** JAVA_HOME must be set for TAK Server to function properly.
 
+### Step 4: Install OpenJDK 17 (REQUIRED for Dependencies)
+
+**CRITICAL**: The TAK Server .deb package requires OpenJDK 17 packages!
+
+```bash
+# Install OpenJDK 17 packages
+sudo apt-get install -y openjdk-17-jdk openjdk-17-jre
+```
+
+**Why do we need both Temurin AND OpenJDK?**
+- The TAK Server .deb has explicit package dependencies on `openjdk-17-jdk`
+- Installation will fail with "dependency problems" without OpenJDK 17
+- Temurin provides the actual runtime (better for production)
+- Both can coexist without conflicts
+
+Verify both are installed:
+```bash
+# Check Java version (should show Temurin)
+java -version
+
+# Check OpenJDK packages are installed
+dpkg -l | grep openjdk-17
+```
+
 ---
 
 ## System Prerequisites
@@ -152,25 +206,28 @@ sudo apt-get upgrade -y
 
 ### Step 2: Install Required Utilities
 
+**IMPORTANT**: Do NOT install PostgreSQL from default repositories! We need version 15 specifically.
+
 ```bash
 sudo apt-get install -y \
     unzip \
     curl \
     wget \
     net-tools \
-    postgresql \
-    postgresql-contrib \
     openssl \
     zip
 ```
+
+**Note**: We deliberately left out `postgresql` here. We'll install PostgreSQL 15 specifically in the next steps.
 
 **What these do:**
 - `unzip`: Extract TAK Server archives
 - `curl/wget`: Download files
 - `net-tools`: Network diagnostics
-- `postgresql`: Database for TAK Server
 - `openssl`: Certificate generation
 - `zip`: Package certificates
+
+**PostgreSQL 15 will be installed separately** using the official PostgreSQL repository to ensure we get the correct version.
 
 ### Step 3: Configure System Limits
 
@@ -205,6 +262,69 @@ Enable IPv4 forwarding for multicast:
 ```bash
 sudo sysctl -w net.ipv4.ip_forward=1
 echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.conf
+```
+
+---
+
+## PostgreSQL 15 Installation
+
+**CRITICAL**: Install PostgreSQL 15 BEFORE installing TAK Server!
+
+### Step 1: Add PostgreSQL APT Repository
+
+```bash
+# Install prerequisites
+sudo apt-get install -y curl ca-certificates
+
+# Create directory for PostgreSQL keys
+sudo install -d /usr/share/postgresql-common/pgdg
+
+# Download PostgreSQL GPG key
+sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+
+# Add PostgreSQL repository
+sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+```
+
+### Step 2: Install PostgreSQL 15
+
+```bash
+sudo apt-get update
+sudo apt-get install -y postgresql-15 postgresql-client-15 postgresql-contrib-15 postgresql-15-postgis-3
+```
+
+**IMPORTANT**: Notice we explicitly specify `-15` in all package names!
+
+### Step 3: Verify PostgreSQL 15 is Installed
+
+```bash
+# Check version - MUST show 15.x, NOT 16.x
+psql --version
+
+# Should output: psql (PostgreSQL) 15.x
+```
+
+**If you see version 16 instead of 15:**
+```bash
+# Remove PostgreSQL 16
+sudo apt-get purge postgresql-16 postgresql-client-16 postgresql-contrib-16
+sudo apt-get autoremove -y
+
+# Then repeat steps 1-2 above
+```
+
+### Step 4: Configure and Start PostgreSQL 15
+
+```bash
+# Ensure PostgreSQL 15 uses port 5432
+sudo sed -i 's/port = 5433/port = 5432/' /etc/postgresql/15/main/postgresql.conf
+
+# Start and enable PostgreSQL
+sudo systemctl start postgresql@15-main
+sudo systemctl enable postgresql@15-main
+
+# Verify it's running
+sudo systemctl status postgresql@15-main
 ```
 
 ---
@@ -825,13 +945,15 @@ iostat -x 5
 
 Optimize PostgreSQL:
 ```bash
-sudo nano /etc/postgresql/16/main/postgresql.conf
+sudo nano /etc/postgresql/15/main/postgresql.conf
 
 # Increase these values:
 shared_buffers = 2GB
 effective_cache_size = 6GB
 work_mem = 50MB
 ```
+
+**Note**: Path is `/etc/postgresql/15/main/` because we're using PostgreSQL 15, not 16!
 
 Restart PostgreSQL:
 ```bash
