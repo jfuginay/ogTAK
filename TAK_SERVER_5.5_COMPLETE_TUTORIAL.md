@@ -6,6 +6,29 @@
 
 ---
 
+## IMPORTANT GOTCHAS - READ FIRST!
+
+### PostgreSQL Version: MUST Use Version 15
+
+**Ubuntu 24.04 may install PostgreSQL 16 by default, which BREAKS TAK Server!**
+
+- TAK Server 5.5 **only works with PostgreSQL 15**
+- Ubuntu's default `apt install postgresql` often installs version 16
+- PostgreSQL 16 will cause database connection failures and server crashes
+- **You MUST explicitly install PostgreSQL 15 using the PostgreSQL APT repository**
+- Follow the [PostgreSQL 15 Installation](#postgresql-15-installation) section exactly as written
+
+### Java: Keep OpenJDK 17 Installed
+
+**Do NOT remove OpenJDK 17 after installing Temurin!**
+
+- TAK Server .deb package has dependencies on OpenJDK 17 packages
+- Both Temurin JDK 17 (runtime) AND OpenJDK 17 (dependencies) are required
+- This tutorial installs both - follow it exactly as written
+- Removing OpenJDK 17 will break the installation
+
+---
+
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
 2. [Java Installation (Temurin 17 + OpenJDK 17)](#java-installation)
@@ -36,12 +59,19 @@
 
 TAK Server 5.5 requires Java 17. We'll install both Temurin and OpenJDK to satisfy all dependencies.
 
-### 1. Remove any existing OpenJDK (if present)
+**IMPORTANT**: This section installs BOTH Temurin JDK 17 AND OpenJDK 17. Both are required!
+- Temurin 17: Used as the runtime Java environment
+- OpenJDK 17: Required to satisfy .deb package dependencies
+
+### 1. Remove any existing Java 21 or other versions (NOT Java 17!)
 
 ```bash
-sudo apt-get remove -y openjdk-17-jdk openjdk-17-jre openjdk-17-jdk-headless openjdk-17-jre-headless openjdk-21-jdk openjdk-21-jre openjdk-21-jdk-headless openjdk-21-jre-headless
+# Remove Java 21 and other versions, but we'll reinstall OpenJDK 17 later
+sudo apt-get remove -y openjdk-21-jdk openjdk-21-jre openjdk-21-jdk-headless openjdk-21-jre-headless
 sudo apt-get autoremove -y
 ```
+
+**Note**: We're removing Java 21 if present, but we'll install OpenJDK 17 in step 5 below.
 
 ### 2. Install Temurin Java 17
 
@@ -77,17 +107,36 @@ echo $JAVA_HOME
 
 Expected output: `openjdk version "17.0.16" ... Temurin-17.0.16+8`
 
-### 5. Install OpenJDK 17 (for .deb package dependencies)
+### 5. Install OpenJDK 17 (REQUIRED for .deb package dependencies)
+
+**CRITICAL**: Do not skip this step! The TAK Server .deb package will fail to install without OpenJDK 17.
 
 ```bash
 sudo apt-get install -y openjdk-17-jdk openjdk-17-jre
 ```
 
+**Why both Temurin and OpenJDK?**
+- The TAK Server .deb package explicitly requires `openjdk-17-jdk` in its dependencies
+- We use Temurin as the actual runtime because it's more stable for production
+- Both must coexist on the system
+
 ---
 
 ## PostgreSQL 15 Installation
 
-TAK Server 5.5 **specifically requires PostgreSQL 15** (not 16 or newer).
+**WARNING: PostgreSQL Version is Critical!**
+
+TAK Server 5.5 **ONLY works with PostgreSQL 15**. Do NOT use version 16!
+
+**Why this matters:**
+- Ubuntu 24.04 may install PostgreSQL 16 by default if you use `apt install postgresql`
+- PostgreSQL 16 is incompatible with TAK Server 5.5 and will cause severe issues:
+  - Database connection failures
+  - Server crashes on startup
+  - Schema migration errors
+- **You MUST use the PostgreSQL APT repository to explicitly install version 15**
+
+Follow these steps exactly to install PostgreSQL 15:
 
 ### 1. Add PostgreSQL APT Repository
 
@@ -117,11 +166,26 @@ sudo systemctl restart postgresql@15-main
 
 ### 4. Verify PostgreSQL Installation
 
+**CRITICAL VERIFICATION**: Make sure you have PostgreSQL 15, not 16!
+
 ```bash
+# Check version - MUST show "15.x"
 psql --version
+
+# Should output: psql (PostgreSQL) 15.x
+# If you see 16.x, you installed the wrong version!
+
+# Check service status
 sudo systemctl status postgresql@15-main
+
+# Test database access
 sudo -u postgres psql -c "\l"
 ```
+
+**If you see PostgreSQL 16 instead of 15:**
+1. Remove PostgreSQL 16: `sudo apt-get purge postgresql-16 postgresql-client-16`
+2. Go back to step 1 and follow the instructions exactly
+3. Make sure you specify `-15` in the package names
 
 ---
 
