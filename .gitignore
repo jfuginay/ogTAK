@@ -1,0 +1,20 @@
+# Sensitive certificate files
+*.p12
+*.key
+*.jks
+*-trusted.pem
+
+# Certificate directory (contains sensitive files)
+client-certificates/
+
+# Downloaded packages
+downloads/
+
+# Temporary files
+.claude/
+*.log
+*.tmp
+
+# Keep only the tutorial and documentation
+!*.md
+!README.txt
