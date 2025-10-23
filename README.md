@@ -2,6 +2,41 @@
 
 Complete guides for installing and configuring TAK Server 5.5 on Ubuntu 24.04 LTS, including federation setup.
 
+## Important Gotchas / Known Issues
+
+### Critical: PostgreSQL Version MUST be 15
+
+**Ubuntu 24.04 may try to install PostgreSQL 16 by default, which will cause TAK Server to fail!**
+
+- TAK Server 5.5 **requires PostgreSQL 15** specifically
+- Ubuntu 24.04's default apt repository often provides PostgreSQL 16
+- Using PostgreSQL 16 will cause database connection errors and server failures
+- **Solution**: You MUST explicitly specify PostgreSQL 15 during installation using the PostgreSQL APT repository
+
+See the [PostgreSQL Installation section](TAK_SERVER_5.5_COMPLETE_TUTORIAL.md#postgresql-15-installation) in the tutorial for the correct installation commands.
+
+### Critical: OpenJDK 17 is REQUIRED
+
+**Do NOT remove OpenJDK 17 completely!**
+
+- The TAK Server .deb package has dependencies on OpenJDK 17 packages
+- While we use Temurin JDK 17 as the runtime, the OpenJDK 17 packages must be installed to satisfy dependencies
+- Removing OpenJDK 17 will cause the .deb installation to fail
+- **Solution**: Install both Temurin JDK 17 (for runtime) AND OpenJDK 17 packages (for dependencies)
+
+The tutorial correctly shows installing both - follow it as written.
+
+### Critical: Federation Hub is Separate Package
+
+**Federation requires a separate Federation Hub package!**
+
+- Federation Hub is **NOT** included in the main TAK Server package
+- You must download `takserver-fed-hub_5.5-RELEASE58_all.deb` separately from tak.gov
+- Federation Hub scripts need PATH fixes for Ubuntu 24.04 (full paths to `/usr/bin/awk` and `/usr/bin/java`)
+- See [FEDERATION_SETUP.md](FEDERATION_SETUP.md) for complete details
+
+---
+
 ## Overview
 
 This repository contains step-by-step installation and configuration guides for:
@@ -53,6 +88,27 @@ Before starting, you need to:
 - Key gotchas and common pitfalls
 
 ## Quick Start
+
+**Read the gotchas above first** - they will save you hours of troubleshooting!
+
+Choose the guide that fits your needs:
+
+1. **[Complete Tutorial](TAK_SERVER_5.5_COMPLETE_TUTORIAL.md)** - Step-by-step installation with all commands
+   - Best for: First-time installers
+   - Includes: Exact commands, verification steps, troubleshooting
+   - Time: 1-2 hours
+
+2. **[Installation Guide](TAK_SERVER_5.5_INSTALLATION_GUIDE.md)** - Comprehensive guide with detailed explanations
+   - Best for: Understanding the architecture and configuration
+   - Includes: Detailed explanations, certificate setup, advanced configuration
+   - Time: 2-3 hours
+
+3. **[Federation Setup](FEDERATION_SETUP.md)** - Complete Federation Hub setup guide
+   - Best for: Connecting to OpenTAKServer or other TAK servers
+   - Includes: Certificate trust, firewall config, troubleshooting, key gotchas
+   - Time: 30-60 minutes
+
+## Installation Commands
 
 1. **Install TAK Server** (follow complete tutorial first):
    ```bash
