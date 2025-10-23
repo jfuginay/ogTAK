@@ -2,18 +2,43 @@
 *.p12
 *.key
 *.jks
+*.pem
 *-trusted.pem
+*.csr
+*.crt
+ca-do-not-share.key
+root-ca-do-not-share.key
 
 # Certificate directory (contains sensitive files)
 client-certificates/
+certs/
+*.keystore
+*.truststore
 
-# Downloaded packages
+# TAK Server packages and downloads (users must download from tak.gov)
 downloads/
+*.deb
+*.rpm
+*.zip
+takserver*.deb
+takserver-fed-hub*.deb
+takserver-docker*.zip
+
+# Database credentials and configs
+*.pol
+*-gpg.key
 
 # Temporary files
 .claude/
 *.log
 *.tmp
+*.bak
+*.backup
+
+# Sensitive configuration with passwords
+CoreConfig.xml.backup
+*password*
+*credentials*
 
 # Keep only the tutorial and documentation
 !*.md
