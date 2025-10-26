@@ -78,7 +78,17 @@ Before starting, you need to:
 - Alternative installation reference
 - Quick reference for experienced users
 
-### 2. Federation Setup
+### 2. Docker Installation
+
+**[TAK_SERVER_DOCKER_GUIDE.md](TAK_SERVER_DOCKER_GUIDE.md)**
+- Complete Docker installation and setup guide
+- Docker Compose configuration
+- Container-based deployment with persistent data
+- Certificate generation in containers
+- Federation in Docker
+- Production considerations and best practices
+
+### 3. Federation Setup
 
 **[FEDERATION_SETUP.md](FEDERATION_SETUP.md)**
 - Complete Federation Hub installation guide
@@ -103,7 +113,12 @@ Choose the guide that fits your needs:
    - Includes: Detailed explanations, certificate setup, advanced configuration
    - Time: 2-3 hours
 
-3. **[Federation Setup](FEDERATION_SETUP.md)** - Complete Federation Hub setup guide
+3. **[Docker Installation Guide](TAK_SERVER_DOCKER_GUIDE.md)** - Complete Docker containerized deployment
+   - Best for: Container-based deployments, development environments, easy setup
+   - Includes: Dockerfile, Docker Compose, persistent volumes, production considerations
+   - Time: 1-2 hours
+
+4. **[Federation Setup](FEDERATION_SETUP.md)** - Complete Federation Hub setup guide
    - Best for: Connecting to OpenTAKServer or other TAK servers
    - Includes: Certificate trust, firewall config, troubleshooting, key gotchas
    - Time: 30-60 minutes
@@ -189,6 +204,7 @@ See individual guides for detailed troubleshooting steps.
 ├── README.md                                    # This file
 ├── TAK_SERVER_5.5_COMPLETE_TUTORIAL.md         # Full installation guide
 ├── TAK_SERVER_5.5_INSTALLATION_GUIDE.md        # Alternative reference
+├── TAK_SERVER_DOCKER_GUIDE.md                  # Docker installation guide
 ├── FEDERATION_SETUP.md                          # Federation guide
 └── .gitignore                                   # Security exclusions
 ```
@@ -214,5 +230,6 @@ These guides are provided as-is for educational purposes. TAK Server software is
 
 ## Version History
 
+- **v1.2** - Added Docker installation and setup guide with Docker Compose
 - **v1.1** - Added Federation Hub setup guide with detailed gotchas
 - **v1.0** - Initial TAK Server 5.5 installation guide for Ubuntu 24.04
