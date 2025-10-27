@@ -141,6 +141,66 @@ Choose the guide that fits your needs:
    - Web UI: `https://YOUR_SERVER_IP:8443`
    - Federation UI: `https://YOUR_SERVER_IP:9100`
 
+## Post-Installation Verification
+
+### Verify TAK Server Status
+
+Check that all TAK Server services are running:
+
+```bash
+# Check main services
+sudo systemctl status takserver-messaging.service
+sudo systemctl status takserver-api.service
+
+# Verify all TAK components
+sudo systemctl list-units --type=service --all | grep -i tak
+
+# Check running processes
+ps aux | grep -i tak | grep -v grep
+
+# Verify listening ports
+sudo netstat -tlnp | grep -E ':(8089|8443|8444|8446)'
+```
+
+Expected output should show:
+- takserver-messaging.service: active
+- takserver-api.service: active
+- Ports 8089, 8443, 8444, 8446 listening
+
+### Access Web Interface
+
+TAK Server requires a client certificate for web access. The admin certificate is generated during installation.
+
+**Copy Admin Certificate:**
+
+```bash
+# Copy certificate to home directory
+sudo cp /opt/tak/certs/files/admin.p12 ~/admin.p12
+sudo chown $USER:$USER ~/admin.p12
+```
+
+**Import Certificate to Browser:**
+
+Firefox:
+1. Settings → Privacy & Security → Certificates → View Certificates
+2. "Your Certificates" tab → Import
+3. Select `admin.p12`
+4. Password: `atakatak` (default)
+5. Restart browser
+
+Chrome/Chromium:
+1. Settings → Privacy and Security → Security → Manage certificates
+2. "Your certificates" → Import
+3. Select `admin.p12`
+4. Password: `atakatak` (default)
+5. Restart browser
+
+**Access Web UI:**
+
+Navigate to `https://localhost:8443` or `https://YOUR_SERVER_IP:8443`
+
+When prompted, select the `admin` certificate to authenticate.
+
 ## Key Components
 
 ### TAK Server Ports
